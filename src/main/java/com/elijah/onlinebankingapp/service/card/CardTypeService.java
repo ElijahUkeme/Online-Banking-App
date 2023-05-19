@@ -21,6 +21,9 @@ public class CardTypeService {
     @Autowired
     private CardTypeRepository cardTypeRepository;
 
+    //create a debit card type to be used by customers such as VISA, VERVE and MASTER
+    //will first loop through the available card type in the database to check if the
+    //card type has already being created by the bank to avoid duplicate creation of card type
     public ResponseEntity<SignUpResponse> createCardType(CardTypeDto cardTypeDto) throws DataAlreadyExistException {
         List<CardType> cardTypeList = getAllAvailableCardType();
         for (CardType cardType: cardTypeList){
@@ -34,12 +37,15 @@ public class CardTypeService {
         cardTypeRepository.save(cardType);
         return new ResponseEntity<>(new SignUpResponse(true,"Card Type Created Successfully"), HttpStatus.CREATED);
     }
+
+    //get all the available card type from the database
     public List<CardType> getAllAvailableCardType(){
         List<CardType> cardTypeList = cardTypeRepository.findAll();
         //this method returns a list of all the cardType from the db
         //and it's working perfectly
         return cardTypeList;
     }
+    //loop to get see if a certain card type in available
     public void getCards(String cardType) throws DataNotFoundException {
         String cardName = "";
         List<CardType> cardTypeList = getAllAvailableCardType();
