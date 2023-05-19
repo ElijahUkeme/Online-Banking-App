@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.List;
 
 @RestController
@@ -49,11 +50,11 @@ public class TransactionController {
         return new ResponseEntity<>(transactionTypeService.getAccountStatementForTheUser(accountNumber),HttpStatus.OK);
     }
     @PostMapping("/account/statement/from/enteredDate")
-    public ResponseEntity<List<BankAccountStatement>> getCustomerAccountStatement(@RequestBody BankAccountStatementDto bankAccountStatementDto,@RequestParam("accountNumber")String accountNumber) throws DataNotFoundException {
+    public ResponseEntity<List<BankAccountStatement>> getCustomerAccountStatement(@RequestBody BankAccountStatementDto bankAccountStatementDto,@RequestParam("accountNumber")String accountNumber) throws DataNotFoundException, ParseException {
         return new ResponseEntity<>(transactionTypeService.getUserAccountStatement(bankAccountStatementDto,accountNumber),HttpStatus.OK);
     }
     @PostMapping("/account/from/date")
-    public ResponseEntity<List<BankAccountStatement>> allTransactionFromDate(@RequestBody BankAccountStatementDto bankAccountStatementDto){
+    public ResponseEntity<List<BankAccountStatement>> allTransactionFromDate(@RequestBody BankAccountStatementDto bankAccountStatementDto) throws ParseException {
         return new ResponseEntity<>(transactionTypeService.getAccountStatement(bankAccountStatementDto),HttpStatus.OK);
     }
 }
