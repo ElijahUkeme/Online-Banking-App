@@ -21,8 +21,8 @@ public class TransactionType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date transactionDate;
+
+    private LocalDate transactionDate;
     private double amount;
     private double currentBalance;
     private String transactionType;
@@ -32,16 +32,3 @@ public class TransactionType {
     @JoinColumn(name = "account_id")
     private BankAccount bankAccount;
 }
-//@Repository
-//public interface TournamentRepository extends PagingAndSortingRepository<Tournament, Long> {
-//    @Query("select * from tournament where start_date <=:date and end_date >=: dateCopy",nativeQuery=true)
-//    List<Tournament> findByStartBeforeAndEndAfter(@Param("date")LocalDate date,@Param("dateCopy") LocalDate dateCopy); //today's date is passed as date and dateCopy
-//
-//}
-
-//@Repository
-//public interface TournamentRepository extends PagingAndSortingRepository<Tournament, Long> {
-//    @Query("select t from Tournament t where t.startDate <=:date and t.endDate >=: dateCopy")
-//    Page<Tournament> findByStartBeforeAndEndAfter(@Param("date")LocalDate date,@Param("dateCopy") LocalDate dateCopy, Pageable page); //today's date is passed as date and dateCopy
-//
-//}
