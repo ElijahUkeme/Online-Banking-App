@@ -27,6 +27,7 @@ public class BankAccountService {
     @Autowired
     private CustomerService customerService;
 
+    //create an account for a customer with some important validations
     public ResponseEntity<SignUpResponse> createAccount(BankAccountDto bankAccountDto, String customerEmail) throws DataNotAcceptableException, DataNotFoundException, DataAlreadyExistException {
         Customer customer = customerService.getCustomerByEmail(customerEmail);
         BankAccount bankAccount = bankAccountRepository.findByCustomer(customer);
@@ -52,6 +53,8 @@ public class BankAccountService {
         bankAccountRepository.save(createdAccount);
         return new ResponseEntity<>(new SignUpResponse(true,"Account created Successfully"), HttpStatus.CREATED);
     }
+
+    //return bank account that belongs to a certain customer through the customer's email
     public BankAccount getAccountByCustomerEmail(String customerEmail) throws DataNotFoundException {
         Customer customer = customerService.getCustomerByEmail(customerEmail);
         BankAccount bankAccount = bankAccountRepository.findByCustomer(customer);
@@ -60,6 +63,7 @@ public class BankAccountService {
         }
         return bankAccount;
     }
+    //return bank account that belongs to a certain customer through the customer's phone number
     public BankAccount getAccountByCustomerPhone(String phoneNumber) throws DataNotFoundException {
         Customer customer = customerService.getCustomerByPhoneNumber(phoneNumber);
         BankAccount bankAccount = bankAccountRepository.findByCustomer(customer);
@@ -68,6 +72,7 @@ public class BankAccountService {
         }
         return bankAccount;
     }
+    //return bank account that belongs to a certain customer through the customer's account number
     public BankAccount getAccountByAccountNumber(String accountNumber) throws DataNotFoundException {
         BankAccount bankAccount = bankAccountRepository.findByAccountNumber(accountNumber);
         if (Objects.isNull(bankAccount)){
@@ -75,6 +80,7 @@ public class BankAccountService {
         }
         return bankAccount;
     }
+    //update the customer's account information
     public BankAccount updateAccountInformation(BankAccountDto bankAccountDto, String accountNumber) throws DataNotFoundException {
         BankAccount bankAccount = getAccountByAccountNumber(accountNumber);
         if (Objects.nonNull(bankAccountDto.getAccountType())&& !"".equals(bankAccountDto.getAccountType())){
@@ -84,6 +90,7 @@ public class BankAccountService {
         }
         return bankAccountRepository.save(bankAccount);
     }
+    //update the account balance of that customer anytime a transaction in done
     public BankAccount updateAccountBalance(BankAccount bankAccount,double newBalance,String accountNumber) throws DataNotFoundException {
          bankAccount= getAccountByAccountNumber(accountNumber);
         if (Objects.nonNull(newBalance)){
