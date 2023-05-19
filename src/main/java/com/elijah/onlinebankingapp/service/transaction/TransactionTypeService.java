@@ -23,10 +23,12 @@ import org.springframework.stereotype.Service;
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class TransactionTypeService {
@@ -37,6 +39,7 @@ public class TransactionTypeService {
     @Autowired
     private DebitCardService debitCardService;
 
+    //deposit money into the customer's account
     public ResponseEntity<TransactionResponse> deposit(TransactionTypeDto transactionTypeDto, String accountNumber) throws DataNotFoundException, DataNotAcceptableException {
         BankAccount bankAccount = bankAccountService.getAccountByAccountNumber(accountNumber);
         double currentBalance = bankAccount.getCurrentBalance();
@@ -49,19 +52,21 @@ public class TransactionTypeService {
         transactionType.setBankAccount(bankAccount);
         transactionType.setCurrentBalance(newBalance);
         transactionType.setTransactionType("CREDIT");
-        transactionType.setTransactionDate(new Date());
+        transactionType.setTransactionDate(LocalDate.now());
         transactionType.setDescription(transactionTypeDto.getDescription());
         transactionType.setDepositorOrWithDrawalName(transactionTypeDto.getDepositorOrWithDrawalName());
         bankAccountService.updateAccountBalance(bankAccount,newBalance,accountNumber);
         transactionTypeRepository.save(transactionType);
         return new ResponseEntity<>(new TransactionResponse("Deposit","Successful","Your Account "+bankAccount.getAccountNumber()+
-                " has been credited with "+transactionTypeDto.getAmount()+" at "+transactionType.getTransactionDate()+" by " +
+                " has been credited with "+transactionTypeDto.getAmount()+" on "+transactionType.getTransactionDate()+" by " +
                 transactionTypeDto.getDepositorOrWithDrawalName()+", your current balance is #"+newBalance), HttpStatus.OK);
     }
+
+    //perform withdrawal at the counter
     public ResponseEntity<TransactionResponse> withdrawAtCounter(TransactionTypeDto transactionTypeDto, String accountNumber) throws DataNotFoundException, DataNotAcceptableException {
         BankAccount bankAccount = bankAccountService.getAccountByAccountNumber(accountNumber);
         double currentBalance = bankAccount.getCurrentBalance();
-        if (!checkForInsufficientFund(currentBalance,transactionTypeDto.getAmount())){
+        if (checkForInsufficientFund(currentBalance,transactionTypeDto.getAmount())){
             throw new DataNotAcceptableException("Insufficient fund");
         }
         TransactionType transactionType = new TransactionType();
@@ -71,7 +76,7 @@ public class TransactionTypeService {
         double newBalance = currentBalance - transactionTypeDto.getAmount();
         transactionType.setDepositorOrWithDrawalName(transactionTypeDto.getDepositorOrWithDrawalName());
         transactionType.setDescription(transactionTypeDto.getDescription());
-        transactionType.setTransactionDate(new Date());
+        transactionType.setTransactionDate(LocalDate.now());
         transactionType.setTransactionType("DEBIT");
         transactionType.setCurrentBalance(newBalance);
         transactionType.setBankAccount(bankAccount);
@@ -86,10 +91,11 @@ public class TransactionTypeService {
     private boolean checkForInsufficientFund(double currentBalance, double amountToBeWithdraw){
         double remainingAmount = currentBalance - amountToBeWithdraw;
         if (remainingAmount <500){
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
+    //this is mainly for other bank charges such as ATM maintenance, service alert etc
     public void otherWithdrawal(TransactionTypeDto transactionTypeDto, String accountNumber,double currentBalance,String transactionPurpose) throws DataNotFoundException {
         BankAccount bankAccount = bankAccountService.getAccountByAccountNumber(accountNumber);
         TransactionType transactionType = new TransactionType();
@@ -97,11 +103,13 @@ public class TransactionTypeService {
         transactionType.setBankAccount(bankAccount);
         transactionType.setCurrentBalance(currentBalance);
         transactionType.setTransactionType(transactionPurpose);
-        transactionType.setTransactionDate(new Date());
+        transactionType.setTransactionDate(LocalDate.now());
         transactionType.setDescription(transactionTypeDto.getDescription());
         transactionType.setDepositorOrWithDrawalName(transactionTypeDto.getDepositorOrWithDrawalName());
         transactionTypeRepository.save(transactionType);
     }
+
+    //perform withdrawal with debit card
     public ResponseEntity<TransactionResponse> withDrawWithCard(CardWithdrawalDto cardWithdrawalDto, String accountNumber) throws DataNotFoundException, NoSuchAlgorithmException, DataNotAcceptableException {
         if (checkForCardExpiration(accountNumber)){
             throw new DataNotAcceptableException("Your debit Card has expired, please get a new one");
@@ -126,7 +134,7 @@ public class TransactionTypeService {
         }
         double currentBalance = bankAccount.getCurrentBalance();
         double withDrawalAmount = cardWithdrawalDto.getAmount();
-        if (!checkForInsufficientFund(currentBalance,withDrawalAmount)){
+        if (checkForInsufficientFund(currentBalance,withDrawalAmount)){
             throw new DataNotAcceptableException("Insufficient fund");
         }
         double newBalance = currentBalance - withDrawalAmount;
@@ -137,7 +145,7 @@ public class TransactionTypeService {
         transactionType.setBankAccount(bankAccount);
         transactionType.setAmount(cardWithdrawalDto.getAmount());
         transactionType.setDescription("ATM");
-        transactionType.setTransactionDate(new Date());
+        transactionType.setTransactionDate(LocalDate.now());
         bankAccountService.updateAccountBalance(bankAccount,newBalance,accountNumber);
         transactionTypeRepository.save(transactionType);
         return new ResponseEntity<>(new TransactionResponse("Withdrawal","Successful","Your Account "+bankAccount.getAccountNumber()+
@@ -145,6 +153,8 @@ public class TransactionTypeService {
                 "ATM Card Withdrawal, your current balance is #"+newBalance), HttpStatus.OK);
 
     }
+
+    //transfer money from one account to another
     public ResponseEntity<TransactionResponse> transferMoneyToAnotherAccount(TransferTransactionDto transferTransactionDto, String recipientAccountNumber) throws DataNotAcceptableException, DataNotFoundException, NoSuchAlgorithmException {
         if (checkForCardExpiration(transferTransactionDto.getAccountNumberFrom())){
             throw new DataNotAcceptableException("Your debit Card has expired, please get a new one");
@@ -177,7 +187,7 @@ public class TransactionTypeService {
         double senderAccountCurrentBalance = senderAccount.getCurrentBalance();
         double recipientAccountCurrentBalance = recipientAccount.getCurrentBalance();
         double transferAmount = transferTransactionDto.getAmount();
-        if (!checkForInsufficientFund(senderAccountCurrentBalance,transferAmount)){
+        if (checkForInsufficientFund(senderAccountCurrentBalance,transferAmount)){
             throw new DataNotAcceptableException("Insufficient fund");
         }
         double senderAccountNewBalance = senderAccountCurrentBalance - transferAmount;
@@ -196,8 +206,8 @@ public class TransactionTypeService {
         receiverTransferType.setAmount(transferAmount);
         senderTransferType.setDescription("Account to Account Transfer");
         receiverTransferType.setDescription("Account to Account Transfer");
-        senderTransferType.setTransactionDate(new Date());
-        receiverTransferType.setTransactionDate(new Date());
+        senderTransferType.setTransactionDate(LocalDate.now());
+        receiverTransferType.setTransactionDate(LocalDate.now());
 
         bankAccountService.updateAccountBalance(senderAccount,senderAccountNewBalance,transferTransactionDto.getAccountNumberFrom());
         bankAccountService.updateAccountBalance(recipientAccount,recipientAccountNewBalance,recipientAccountNumber);
@@ -217,11 +227,15 @@ public class TransactionTypeService {
         String hash = DatatypeConverter.printHexBinary(digest).toLowerCase().substring(0,12);
         return hash;
     }
+
+    //return all the transaction performed so far by the bank
     public List<TransactionType> getAllTransaction(){
         List<TransactionType> transactionTypeList = transactionTypeRepository.findAll();
         return transactionTypeList;
     }
-    public List<BankAccountStatement> getAccountStatement(BankAccountStatementDto bankAccountStatementDto){
+
+    //return all the bank statement of all the customers
+    public List<BankAccountStatement> getAccountStatement(BankAccountStatementDto bankAccountStatementDto) throws ParseException {
         List<TransactionType> transactionTypeList = transactionTypeRepository.getTransactionStatement(bankAccountStatementDto.getStartDate(),bankAccountStatementDto.getEndDate());
         List<BankAccountStatement> bankAccountStatementList = new ArrayList<>();
         for (TransactionType transactionType: transactionTypeList){
@@ -237,9 +251,14 @@ public class TransactionTypeService {
         }
         return bankAccountStatementList;
     }
+
+    //check for the expiration of customer's debit card
     public boolean checkForCardExpiration(String accountNumber) throws DataNotFoundException {
         boolean expired = false;
         DebitCard debitCard = debitCardService.getCardDetails(accountNumber);
+        if (Objects.isNull(debitCard)){
+            throw new DataNotFoundException("There is no debit card associated to this account");
+        }
         LocalDate localDate = debitCard.getExpiringDate();
         LocalDate currentDate = LocalDate.now();
         if (currentDate.isAfter(localDate)){
@@ -250,6 +269,8 @@ public class TransactionTypeService {
         return expired;
 
     }
+
+    //get all the account statement for a particular customer
     public List<BankAccountStatement> getAccountStatementForTheUser(String accountNumber) throws DataNotFoundException {
         BankAccount bankAccount = bankAccountService.getAccountByAccountNumber(accountNumber);
         List<TransactionType> transactionTypeList = transactionTypeRepository.findByBankAccount(bankAccount);
@@ -269,7 +290,9 @@ public class TransactionTypeService {
         }
         return bankAccountStatementList;
     }
-    public List<BankAccountStatement> getUserAccountStatement(BankAccountStatementDto bankAccountStatementDto, String accountNumber) throws DataNotFoundException {
+
+    //get account statement to the customer based on certain periods
+    public List<BankAccountStatement> getUserAccountStatement(BankAccountStatementDto bankAccountStatementDto, String accountNumber) throws DataNotFoundException, ParseException {
         BankAccount bankAccount = bankAccountService.getAccountByAccountNumber(accountNumber);
         List<TransactionType> transactionTypeList = transactionTypeRepository.findByBankAccountAndTransactionDate(bankAccount,bankAccountStatementDto.getStartDate(),bankAccountStatementDto.getEndDate());
         //the TransactionType has so many data and I don't need all the data in it
