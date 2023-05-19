@@ -38,11 +38,14 @@ public class DebitCardService {
     @Autowired
     private TransactionTypeService transactionTypeService;
 
+    //create a debit card to a certain customer with so many validation
     public ResponseEntity<SignUpResponse> createDebitCard(DebitCardDto debitCardDto, String accountNumber) throws DataNotFoundException, DataNotAcceptableException {
         BankAccount bankAccount = bankAccountService.getAccountByAccountNumber(accountNumber);
         double currentBalance = bankAccount.getCurrentBalance();
         DebitCard card = debitCardRepository.findByBankAccount(bankAccount);
         if (Objects.nonNull(card)){
+            //which means this user has already have a debit card
+            //proceed to check if the card has expired
             LocalDate localDate = card.getExpiringDate();
             LocalDate currentDate = LocalDate.now();
             if (currentDate.isEqual(localDate)|| currentDate.isBefore(localDate)){
@@ -51,6 +54,7 @@ public class DebitCardService {
                 throw new DataNotAcceptableException("You can't create another card yet, your old card has not expired");
             }
         }
+        //go ahead and generate a debit card to the user and deduct the card charges from his/her account
         String transactionPurpose = "Debit Card Charge";
         double cardCharge = 0;
         boolean found = false;
@@ -106,6 +110,8 @@ public class DebitCardService {
         String hash = DatatypeConverter.printHexBinary(digest).toLowerCase().substring(0,12);
         return hash;
     }
+
+    //return the details of the customer's card based on the entered account number
     public DebitCard getCardDetails(String accountNumber) throws DataNotFoundException {
         BankAccount bankAccount = bankAccountService.getAccountByAccountNumber(accountNumber);
         DebitCard debitCard = debitCardRepository.findByBankAccount(bankAccount);
