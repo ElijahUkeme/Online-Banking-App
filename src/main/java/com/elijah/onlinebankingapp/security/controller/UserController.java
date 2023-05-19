@@ -1,3 +1,4 @@
+/*
 package com.elijah.onlinebankingapp.security.controller;
 
 import com.auth0.jwt.JWT;
@@ -96,3 +97,4 @@ public class UserController {
     }
 
 }
+*/
