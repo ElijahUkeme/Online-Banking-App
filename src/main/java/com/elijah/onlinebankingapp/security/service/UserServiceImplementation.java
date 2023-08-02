@@ -1,3 +1,4 @@
+/*
 package com.elijah.onlinebankingapp.security.service;
 
 import com.elijah.onlinebankingapp.exception.DataAlreadyExistException;
@@ -99,3 +100,4 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
 
 
 }
+*/

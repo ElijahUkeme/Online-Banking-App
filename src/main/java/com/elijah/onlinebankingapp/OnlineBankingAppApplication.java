@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = SecurityAutoConfiguration.class)
 public class OnlineBankingAppApplication {
 
 	public static void main(String[] args) {
@@ -21,24 +21,24 @@ public class OnlineBankingAppApplication {
 
 
 	}
-//	@Bean
-//	CommandLineRunner runner(UserService userService){
-//		return args -> {
-//			userService.saveRole(new Role(null,"SUPER_ADMIN"));
-//			userService.saveRole(new Role(null,"ADMIN"));
-//			userService.saveRole(new Role(null,"USER"));
-//			userService.saveRole(new Role(null,"MANAGER"));
-//			userService.saveUser(new UserModel(null,"Ukeme Elijah","Ukemsco","ukeme",new ArrayList<>()));
-//			userService.saveUser(new UserModel(null,"Emediong Dan","Ekababa","emediong",new ArrayList<>()));
-//
-//			userService.addRoleToUser("Ukemsco","SUPER_ADMIN");
-//			userService.addRoleToUser("Ukemsco","ADMIN");
-//			userService.addRoleToUser("Ekababa","USER");
-//		};
-//	}
+	/*@Bean
+	CommandLineRunner runner(UserService userService){
+		return args -> {
+			userService.saveRole(new Role(null,"SUPER_ADMIN"));
+			userService.saveRole(new Role(null,"ADMIN"));
+			userService.saveRole(new Role(null,"USER"));
+			userService.saveRole(new Role(null,"MANAGER"));
+			userService.saveUser(new UserModel(null,"Ukeme Elijah","Ukemsco","ukeme",new ArrayList<>()));
+			userService.saveUser(new UserModel(null,"Emediong Dan","Ekababa","emediong",new ArrayList<>()));
+
+			userService.addRoleToUser("Ukemsco","SUPER_ADMIN");
+			userService.addRoleToUser("Ukemsco","ADMIN");
+			userService.addRoleToUser("Ekababa","USER");
+		};
+	}
 	@Bean
 	PasswordEncoder passwordEncoder(){
 		return new BCryptPasswordEncoder();
-	}
+	}*/
 
 }
